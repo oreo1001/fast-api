@@ -1,30 +1,37 @@
 # Sllm fast-api
 
-#env aws cofiguration code
-cp .env.example .env
+### env aws cofiguration code
 
-# 가상환경 설치후 다운로드
+```bash
+$ cp .env.example .env
+```
 
-python -m venv venv <br>
-source ./venv/Scripts/activate (윈도우) <br>
-pip install -r requirements.txt <br>
+### 가상환경 설치후 다운로드
 
-# 서버 실행
+```bash
+$ python -m venv venv <br>
+$ source ./venv/Scripts/activate (윈도우) <br>
+$ pip install -r requirements.txt <br>
+```
 
-uvicorn main:app --reload
+### 서버 실행
 
-fast-api와 asgi인 uvicorn을 사용해서 웹 애플리케이션 제공
+```bash
+$ uvicorn main:app --reload
+```
 
-# API Docs (로컬)
+> fast-api와 asgi인 uvicorn을 사용해서 웹 애플리케이션 제공
+
+### API Docs (로컬)
 
 localhost:8000/docs
 
-# 로그 확인 (개선 필요)
+### 로그 확인 (개선 필요)
 
 localhost:8000/logs
 
-# SimpleChat API 테스트
+### SimpleChat API 테스트
 
 localhost:8000/sllm/simplechat
 
-포스트맨에서 테스트
+> 포스트맨에서 테스트
