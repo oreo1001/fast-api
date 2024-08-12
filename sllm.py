@@ -2,9 +2,7 @@ import asyncio
 import json
 import time
 from fastapi import APIRouter, HTTPException, Request, logger
-from fastapi.responses import JSONResponse
-from flask import Response, request
-from flask_restx import Resource
+from fastapi.responses import JSONResponse, StreamingResponse
 import pytz
 from custom_mongo_chat import CustomMongoDBChatHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -59,11 +57,11 @@ async def post_message(request: Request):
 @router.get("/messages")
 async def get_message(session_id: str):
     if not session_id:
-        return Response(content='message: No session_id provided', headers=headers, media_type='text/event-stream')
+        return StreamingResponse(content='message: No session_id provided', headers=headers, media_type='text/event-stream')
 
     myChat = chatCollection.find_one({"session_id": session_id})
     if not myChat:
-        return Response(content='Session not found', headers=headers, media_type='text/event-stream')
+        return StreamingResponse(content='Session not found', headers=headers, media_type='text/event-stream')
 
     question = myChat['temp_question']
     return run_langchain_stream(question=question, session_id=session_id)
@@ -125,7 +123,7 @@ def run_langchain_stream(question, session_id):
         except Exception as e:
             yield f"data: Error: {str(e)}\n\n"
 
-    return Response(generate(), headers=headers, media_type='text/event-stream')
+    return  StreamingResponse(generate(), headers=headers, media_type='text/event-stream')
 
 def get_response(chain, prompt, config):
     return (
@@ -144,7 +142,7 @@ async def get_simple(request: Request):
     if question == '':
         raise HTTPException(status_code=400, detail="No input data")
     if not session_id:
-        return Response(content='message: No session_id provided')
+        return StreamingResponse(content='No Session Id Provided', headers=headers, media_type='text/event-stream')
 
     answer = run_langchain(question,session_id)
     return JSONResponse(content={"answer": answer})

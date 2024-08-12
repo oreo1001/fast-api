@@ -1,3 +1,4 @@
 fast_app.log
 .env
 __pycache__/
+/venv

@@ -2,13 +2,19 @@ import logging
 from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
+from langserve.pydantic_v1 import BaseModel,Field
 from logs import router as logs_router
 from test import router as test_router
 from sllm import router as sllm_router
 from starlette.concurrency import iterate_in_threadpool
+
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from typing import List, Union
+from langserve import add_routes
+from chat import chain as chat_chain
 
 app = FastAPI()
 
@@ -19,6 +25,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.get("/")
+async def redirect_root_to_docs():
+    print("get res")
+    return RedirectResponse("/chat/playground")
+
+
+class InputChat(BaseModel):
+    """Input for the chat endpoint."""
+
+    messages: List[Union[HumanMessage, AIMessage, SystemMessage]] = Field(
+        ...,
+        description="The chat messages representing the current conversation.",
+    )
 
 
 #로깅 설정
@@ -40,11 +59,13 @@ async def log_request(request: Request, call_next):
 @app.middleware("http")
 async def log_response(request: Request, call_next):
     response = await call_next(request)
-    logging.info(f"Response: {response.status_code}")
-    # 응답 바디 로깅
     response_body = [chunk async for chunk in response.body_iterator]
+    if response_body:
+        logging.info(f"Response Body: {response_body[0].decode()}")
+    # 바디를 다시 설정
     response.body_iterator = iterate_in_threadpool(iter(response_body))
-    logging.info(f"Response Body: {response_body[0].decode()}")
+    
+    logging.info(f"Response: {response.status_code}")
     return response
 
 def read_logs(log_file='fast_app.log'):
@@ -64,4 +85,22 @@ async def get_logs(request: Request):
 # .env 파일 로드
 load_dotenv('.env')
 app.include_router(test_router)
-app.include_router(sllm_router)
+# app.include_router(sllm_router)
+
+add_routes(
+    app,
+    chat_chain.with_types(input_type=InputChat),
+    path="/chat",
+    enable_feedback_endpoint=True,
+    enable_public_trace_link_endpoint=True,
+    playground_type="chat",
+)
+
+# add_routes(
+#     app,
+#     chat_chain.with_types(input_type=InputChat),
+#     path="/ollama",
+#     enable_feedback_endpoint=True,
+#     enable_public_trace_link_endpoint=True,
+#     playground_type="ollama",
+# )
