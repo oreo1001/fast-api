@@ -2,10 +2,12 @@ import logging
 from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from fastapi.concurrency import asynccontextmanager
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from langserve.pydantic_v1 import BaseModel,Field
+from load_model import llm, load_model_func
 from logs import router as logs_router
 from test import router as test_router
 from sllm import router as sllm_router
@@ -16,7 +18,15 @@ from typing import List, Union
 from langserve import add_routes
 from chat import chain as chat_chain
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_model_func()
+    # 컨텍스트 진입: 초기화 작업이 완료된 상태에서 애플리케이션이 실행됩니다.
+    yield
+    # 애플리케이션 종료 시 실행할 정리 작업 (필요할 경우)
+    print("애플리케이션이 종료되었습니다.")
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -104,3 +114,7 @@ add_routes(
 #     enable_public_trace_link_endpoint=True,
 #     playground_type="ollama",
 # )
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

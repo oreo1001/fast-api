@@ -19,11 +19,7 @@ base_model = '4yo1/sapie'
 token = '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'
 import huggingface_hub
 huggingface_hub.login(token=token)
-
-# def get_tokenizer():
-#     tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)      #base모델의 토크나이저 불러오기
-#     tokenizer.pad_token = tokenizer.eos_token
-#     return tokenizer                                          
+                                    
 model = AutoModelForCausalLM.from_pretrained(base_model)
 tokenizer = AutoTokenizer.from_pretrained(base_model)
 
@@ -50,8 +46,6 @@ template = """Answer the following question in Korean.
 prompt = PromptTemplate.from_template(template)  # 템플릿을 사용하여 프롬프트 객체 생성
 chain = prompt | llm | StrOutputParser()
 
-# answer=chain.stream({"topic":"deep learnging"})
-# stream_response(answer)
 print( chain.invoke({"question": "현재 대한민국의 대통령은 누구야?"}))
 
 # llm = create_huggingface_llm()
