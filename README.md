@@ -35,3 +35,5 @@ localhost:8000/logs
 localhost:8000/sllm/simplechat
 
 > 포스트맨에서 테스트
+
+### SLLM 과 Gemma 테스트용 fast-api 간단 코드
